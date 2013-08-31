@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<title>tuplain</title>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+	<script src="swfobject.js"></script>
+	</head>
+	<style>
+		body {
+			background-color:#202021;
+		}
+		
+		#audioplayer {
+			border: 5px solid black;
+		}
+	</style>
+<body>
+<div id="content">
+
+<div id="videoplayer">
+   js and flash pls :(
+</div>
+<br>
+<div id="audioplayer">
+</div>
+<span id="status">
+loading players...
+</span>
+	
+</div>
+
+<script>
+(function($) {
+    $.QueryString = (function(a) {
+        if (a == "") return {};
+        var b = {};
+        for (var i = 0; i < a.length; ++i)
+        {
+            var p=a[i].split('=');
+            if (p.length != 2) continue;
+            b[p[0]] = decodeURIComponent(p[1].replace(/\+/g, " "));
+        }
+        return b;
+    })(window.location.search.substr(1).split('&'))
+})(jQuery);
+
+function setStatus(msg) {
+	$("#status").html(msg)
+}
+
+function build_yt_url(videoId, playerId) {
+	return "http://www.youtube.com/v/"+videoId+"?enablejsapi=1&playerapiid="+playerId+"&version=3&rel=0&showinfo=0&controls=0&modestbranding=1";
+}
+
+var playerList = {
+	"video_player" : {
+		id : "videoplayer",
+		element: null,
+		seekTime: 0,
+		volume: 0
+	},
+	"audio_player" : {
+		id : "audioplayer",
+		element: null,
+		seekTime: 0,
+		volume: 100
+	}
+}
+
+function checkPlayersReady() {
+	for (var key in playerList) {
+		if (playerList[key]["element"] === null) {
+			return false;
+		}		
+	}
+	
+	return true;
+}
+
+function startVideos() {
+	for (var key in playerList) {
+		playerList[key]["element"].playVideo();
+	}
+	
+	console.log("playing!");
+}
+
+function checkVideoStates() {
+	setStatus("buffering videos...");
+	
+	var allReady = true;
+
+	for (var key in playerList) {
+		var player = playerList[key]["element"];
+		var fraction = player.getVideoLoadedFraction();
+		var duration = player.getDuration();
+		var bufferedSecs = fraction*duration;
+		
+		if (bufferedSecs < 8) {
+			allReady = false;
+		}
+		
+		//console.log(key + ": " + bufferedSecs);
+	}
+	
+	if (allReady) {
+		setStatus("playing!");
+		startVideos();
+	} else {
+		setTimeout(checkVideoStates, 500);
+	}
+}
+
+function onYouTubePlayerReady(playerId) {
+	player = document.getElementById(playerId);
+	playerObj = playerList[playerId];
+	
+	playerObj['element'] = player;
+	
+	console.log("player " + playerId + " ready");
+	setStatus("player " + playerId + " ready");
+	
+	player.seekTo(playerObj["seekTime"], true);
+	player.setVolume(playerObj["volume"]);
+	
+	player.playVideo();
+	player.pauseVideo();
+	
+	if (checkPlayersReady()) {
+		setStatus("all players ready");
+		checkVideoStates();
+	}
+}
+
+var audioId = $.QueryString["audio"];
+var videoId = $.QueryString["video"];
+console.log("audio: " + audioId);
+console.log("video: " + videoId);
+
+if (!(audioId && videoId)) {
+	setStatus("Invalid video URL given.");
+}
+
+playerList["video_player"]["seekTime"]= $.QueryString["videostart"] || 0;
+playerList["audio_player"]["seekTime"] = $.QueryString["audiostart"] || 0;
+
+
+var params = { 
+	allowScriptAccess: "always"
+	};
+swfobject.embedSWF(build_yt_url(videoId, "video_player"),
+				   "videoplayer", "1024", "600", "8", null, null, params, {id: "video_player"});
+				   
+swfobject.embedSWF(build_yt_url(audioId, "audio_player"),
+				   "audioplayer", "320", "200", "8", null, null, params, {id: "audio_player"});
+
+</script>
+
+</body>
+</html>
