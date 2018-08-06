@@ -1,33 +1,89 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+    <head>
 	<title>tuplain</title>
 	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-	<script src="swfobject.js"></script>
 	</head>
 	<style>
+		#title {
+			color:#fff;
+		}
 		body {
 			background-color:#202021;
+                color:#888;
 		}
 		
 		#audioplayer {
 			border: 5px solid black;
 		}
+        h2:hover {
+            background-color: #000;
+            cursor: pointer;
+        }
+        .container {
+            width: 200px;
+            clear: both;
+        }
+        .container input {
+            width: 100%;
+            clear: both;
+        }
 	</style>
 <body>
 <div id="content">
+<h1 id="title"></h1>
 
 <div id="videoplayer">
-   js and flash pls :(
+   js pls :(
 </div>
 <br>
 <div id="audioplayer">
 </div>
+<br>
 <span id="status">
 loading players...
 </span>
 	
 </div>
+
+<h2 id="usage_button">usage:</h2>
+<div style="display:none;" id="help">
+    <p>Create an URL with parameters:</p>
+    <ul>
+        <li>audio = audio id (also v)</li>
+        <li>video = video id (also v)</li>
+        <li>audiostart, videostart = start time in seconds (also as, astart, vs, vstart)</li>
+        <li>vrate, arate = control playback rate. Try 0.25, 0.5, 1.0, 1.5 or 2.0.</li>
+        <li>vvol, avol = set volume 0-100. (also vv, av)</li>
+    </ul>
+
+    <!--
+    <div class="container">
+    <form id="helper_form" action="" method="GET">
+      /*<input type="hidden" name="a" value="1" /> */
+      <label>Video URL: <input type="text" name="v"/></label><br>
+      <label>Audio URL: <input type="text" name="a"/></label><br>
+      <label>Video start: <input type="text" name="vs" value="0"/></label><br>
+      <label>Audio start<input type="text" name="as" value="0"/></label><br>
+      <label>Video rate: <input type="text" name="vr" value="1.0"/></label><br>
+      <label>Audio rate: <input type="text" name="ar" value="1.0"/></label><br>
+      <label><input type="submit" /> </label>
+    </form>
+    </div>
+    -->
+
+    <p>For example:</p>
+    <pre>?audio=tq4tr6fWnsA&video=bmxLE9RDPk4&astart=50&vs=22&vrate=0.5</pre>
+</div>
+<script>
+$("#usage_button").click(function() {
+    $("#help").toggle();
+});
+/*
+$("#helper_form").submit(function(event) {
+    //event.preventDefault();
+});*/
+</script>
 
 <script>
 (function($) {
@@ -48,113 +104,113 @@ function setStatus(msg) {
 	$("#status").html(msg)
 }
 
-function build_yt_url(videoId, playerId) {
-	return "http://www.youtube.com/v/"+videoId+"?enablejsapi=1&playerapiid="+playerId+"&version=3&rel=0&showinfo=0&controls=0&modestbranding=1";
-}
 
-var playerList = {
-	"video_player" : {
-		id : "videoplayer",
-		element: null,
-		seekTime: 0,
-		volume: 0
-	},
-	"audio_player" : {
-		id : "audioplayer",
-		element: null,
-		seekTime: 0,
-		volume: 100
-	}
-}
+var args = {
+    "video" : {
+        videoid : "",
+        start : 10,
+        elementid : "videoplayer",
+        width : "1280",
+        height : "720",
+        volume : 0,
+        rate : 1.0
+    },
+    "audio" : {
+        videoid : "",
+			start : 0,
+        elementid : "audioplayer",
+        width: "400",
+        height: "300",
+        volume : 100,
+        rate : 1.0
+    }
+};
 
-function checkPlayersReady() {
-	for (var key in playerList) {
-		if (playerList[key]["element"] === null) {
-			return false;
-		}		
-	}
-	
-	return true;
-}
-
-function startVideos() {
-	for (var key in playerList) {
-		playerList[key]["element"].playVideo();
-	}
-	
-	console.log("playing!");
-}
-
-function checkVideoStates() {
-	setStatus("buffering videos...");
-	
-	var allReady = true;
-
-	for (var key in playerList) {
-		var player = playerList[key]["element"];
-		var fraction = player.getVideoLoadedFraction();
-		var duration = player.getDuration();
-		var bufferedSecs = fraction*duration;
-		
-		if (bufferedSecs < 8) {
-			allReady = false;
-		}
-		
-		//console.log(key + ": " + bufferedSecs);
-	}
-	
-	if (allReady) {
-		setStatus("playing!");
-		startVideos();
-	} else {
-		setTimeout(checkVideoStates, 500);
-	}
-}
-
-function onYouTubePlayerReady(playerId) {
-	player = document.getElementById(playerId);
-	playerObj = playerList[playerId];
-	
-	playerObj['element'] = player;
-	
-	console.log("player " + playerId + " ready");
-	setStatus("player " + playerId + " ready");
-	
-	player.seekTo(playerObj["seekTime"], true);
-	player.setVolume(playerObj["volume"]);
-	
-	player.playVideo();
-	player.pauseVideo();
-	
-	if (checkPlayersReady()) {
-		setStatus("all players ready");
-		checkVideoStates();
-	}
-}
-
-var audioId = $.QueryString["audio"];
-var videoId = $.QueryString["video"];
-console.log("audio: " + audioId);
-console.log("video: " + videoId);
+var audioId = $.QueryString["audio"] || $.QueryString["a"];
+var videoId = $.QueryString["video"] || $.QueryString["v"];
+console.log("audio id: " + audioId);
+console.log("video id: " + videoId);
 
 if (!(audioId && videoId)) {
 	setStatus("Invalid video URL given.");
 }
 
-playerList["video_player"]["seekTime"]= $.QueryString["videostart"] || 0;
-playerList["audio_player"]["seekTime"] = $.QueryString["audiostart"] || 0;
+var pick = function(a, b, c) {
+    for(var arg = 0; arg < arguments.length; arg++)
+    {
+        var v =  arguments[arg];
+        if (typeof v != "undefined" && !isNaN(v)) {
+            return v;
+        }
+    }
 
+    return undefined;
+}
 
-var params = { 
-	allowScriptAccess: "always"
-	};
-swfobject.embedSWF(build_yt_url(videoId, "video_player"),
-				   "videoplayer", "1024", "600", "8", null, null, params, {id: "video_player"});
-				   
-swfobject.embedSWF(build_yt_url(audioId, "audio_player"),
-				   "audioplayer", "320", "200", "8", null, null, params, {id: "audio_player"});
+args["video"].videoid = videoId;
+args["audio"].videoid = audioId;
 
+args["video"].start = pick($.QueryString["videostart"], $.QueryString["vstart"], $.QueryString["vs"], 0);
+args["audio"].start = pick($.QueryString["audiostart"], $.QueryString["astart"], $.QueryString["as"], 0);
+args["video"].rate = pick(parseFloat($.QueryString["vrate"]), parseFloat($.QueryString["vr"]), 1.0);
+args["audio"].rate = pick(parseFloat($.QueryString["arate"]), parseFloat($.QueryString["ar"]), 1.0);
+args["video"].volume = pick(parseInt($.QueryString["videovol"]), parseInt($.QueryString["vv"]), 0);
+args["audio"].volume = pick(parseInt($.QueryString["audiovol"]), parseInt($.QueryString["av"]), 100);
+
+var title = $.QueryString["title"] || "";
+console.log("title", title);
+document.getElementById("title").innerHTML = title;
+
+console.log("video", args["video"]);
+console.log("audio", args["audio"]);
+
+// Load the IFrame Player API code asynchronously.
+var tag = document.createElement('script');
+tag.src = "https://www.youtube.com/player_api";
+var firstScriptTag = document.getElementsByTagName('script')[0];
+firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+
+var players = {
+	"video" : {},
+	"audio" : {}
+}
+
+function onYouTubePlayerAPIReady() {
+	for (var name in players) {
+        if (!players.hasOwnProperty(name)) { continue; }
+
+        console.log(args[name]);
+        var config = args[name];
+        players[name] = new YT.Player(config["elementid"], {
+          width: config["width"],
+          height: config["height"],
+          videoId: config["videoid"],
+          playerVars: {
+              /*'autoplay': 1,*/
+              'enablejsapi' : 1,
+              'modestbranding' : 1,
+              'start' : config["start"]
+          },
+          events : {
+              onReady : function(event) {
+                  var vid = event.target;
+                  vid.setVolume(args[vid.name].volume);
+                  vid.setPlaybackRate(args[vid.name].rate);
+                  vid.playVideo();
+                  setStatus("playing?");
+              }
+          }
+        });
+
+        // Attach the player name to the YT player element so we can easily access
+        // them from the event handler.
+        players[name].name = name;
+	}
+
+}
 </script>
 
 </body>
 </html>
+
+
