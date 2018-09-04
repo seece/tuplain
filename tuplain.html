@@ -1,21 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-	<title>tuplain</title>
-	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-	</head>
-	<style>
-		#title {
-			color:#fff;
-		}
-		body {
-			background-color:#202021;
+    <title>tuplain</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    </head>
+    <style>
+        #title {
+            color:#fff;
+        }
+        body {
+            background-color:#202021;
                 color:#888;
-		}
-		
-		#audioplayer {
-			border: 5px solid black;
-		}
+        }
+        
+        #audioplayer {
+            border: 5px solid black;
+        }
         h2:hover {
             background-color: #000;
             cursor: pointer;
@@ -28,7 +28,7 @@
             width: 100%;
             clear: both;
         }
-	</style>
+    </style>
 <body>
 <div id="content">
 <h1 id="title"></h1>
@@ -43,7 +43,7 @@
 <span id="status">
 loading players...
 </span>
-	
+    
 </div>
 
 <h2 id="usage_button">usage:</h2>
@@ -101,7 +101,7 @@ $("#helper_form").submit(function(event) {
 })(jQuery);
 
 function setStatus(msg) {
-	$("#status").html(msg)
+    $("#status").html(msg)
 }
 
 
@@ -117,13 +117,14 @@ var args = {
     },
     "audio" : {
         videoid : "",
-			start : 0,
+            start : 0,
         elementid : "audioplayer",
         width: "400",
         height: "300",
         volume : 100,
         rate : 1.0
-    }
+    },
+    "lengthInSeconds" : 0.0
 };
 
 var audioId = $.QueryString["audio"] || $.QueryString["a"];
@@ -132,7 +133,7 @@ console.log("audio id: " + audioId);
 console.log("video id: " + videoId);
 
 if (!(audioId && videoId)) {
-	setStatus("Invalid video URL given.");
+    setStatus("Invalid video URL given.");
 }
 
 var pick = function(a, b, c) {
@@ -156,6 +157,7 @@ args["video"].rate = pick(parseFloat($.QueryString["vrate"]), parseFloat($.Query
 args["audio"].rate = pick(parseFloat($.QueryString["arate"]), parseFloat($.QueryString["ar"]), 1.0);
 args["video"].volume = pick(parseInt($.QueryString["videovol"]), parseInt($.QueryString["vv"]), 0);
 args["audio"].volume = pick(parseInt($.QueryString["audiovol"]), parseInt($.QueryString["av"]), 100);
+args.lengthInSeconds = pick(parseFloat($.QueryString["len"]), parseFloat($.QueryString["l"]), 0);
 
 var title = $.QueryString["title"] || "";
 console.log("title", title);
@@ -163,6 +165,7 @@ document.getElementById("title").innerHTML = title;
 
 console.log("video", args["video"]);
 console.log("audio", args["audio"]);
+console.log("length", args.lengthInSeconds);
 
 // Load the IFrame Player API code asynchronously.
 var tag = document.createElement('script');
@@ -171,12 +174,35 @@ var firstScriptTag = document.getElementsByTagName('script')[0];
 firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
 var players = {
-	"video" : {},
-	"audio" : {}
+    "video" : {},
+    "audio" : {}
 }
 
+var transport = {
+    "startTime" : 0,
+    "playing" : false,
+    "timer" : null
+}
+
+
+function checkTime() {
+    
+    if (args.lengthInSeconds == 0.0) {
+        return;
+    }
+    
+    var delta = (Date.now() - transport.startTime)/1000.0;
+    console.log(delta);
+    if (delta > args.lengthInSeconds) {
+        players["audio"].stopVideo();
+        players["video"].stopVideo();
+        clearTimeout(args.timer);
+    }
+}
+
+
 function onYouTubePlayerAPIReady() {
-	for (var name in players) {
+    for (var name in players) {
         if (!players.hasOwnProperty(name)) { continue; }
 
         console.log(args[name]);
@@ -197,7 +223,15 @@ function onYouTubePlayerAPIReady() {
                   vid.setVolume(args[vid.name].volume);
                   vid.setPlaybackRate(args[vid.name].rate);
                   vid.playVideo();
-                  setStatus("playing?");
+                  transport.startTime = Date.now();
+                  
+                  // Setup the periodic check only once.
+                  if (!transport.playing && args.lengthInSeconds > 0) {
+                    args.timer = setInterval(checkTime, 100);
+                    transport.playing = true;
+                    setStatus("playing?");
+                  }
+                  
               }
           }
         });
@@ -205,7 +239,7 @@ function onYouTubePlayerAPIReady() {
         // Attach the player name to the YT player element so we can easily access
         // them from the event handler.
         players[name].name = name;
-	}
+    }
 
 }
 </script>
