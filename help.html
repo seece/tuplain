@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+    <title>tuplain</title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    </head>
+    <style>
+    </style>
+    <body>
+        <h1>Tuplain User's Guide</h1>
+        <p>
+        Tuplain is a simple "YouTube doubler" that allows you to play back two videos at the same time.
+        Unfortunately it has no proper user interface so you must manipulate the URL by hand.
+        </p>
+<div id="help">
+    <p>Create an URL with the following parameters:</p>
+    <ul>
+        <li><b>audio</b> = YouTube ID for the audio track (also <b>a</b>)</li>
+        <li><b>video</b> = YouTube ID for the video track (also <b>v</b>)</li>
+        <li><b>audiostart</b>, <b>videostart</b> = start time in seconds (also <b>as</b>, <b>astart</b>, <b>vs</b>, <b>vstart</b>)</li>
+        <li><b>vrate</b>, <b>arate</b> = playback speed. Try 0.25, 0.5, 1.0, 1.5 or 2.0.</li>
+        <li><b>vvol</b>, <b>avol</b> = volume in range 0-100. (also <b>vv</b>, <b>av</b>)</li>
+        <li><b>len</b> = length in seconds (also <b>l</b>)</li>
+    </ul>
+
+    <p>For example:</p>
+    <pre>?audio=tq4tr6fWnsA&video=bmxLE9RDPk4&astart=50&vs=22&vrate=0.5</pre>
+</div>
+
+<h2>Examples</h2>
+<ul>
+    <li><a href="http://cce.kapsi.fi/tuplain/?audio=1hm5cXZUT20&video=QxP73rig6Go&audiostart=6">refleXion (Lizardking Mix)</a></li>
+    <li><a href="http://cce.kapsi.fi/tuplain/?audio=l1L6C1noV48&video=F6kfSG3NlyU&vs=0&as=46">Winnerdemo by ciccacorea & Epoch</a></li>
+    <li><a href="http://cce.kapsi.fi/tuplain/?video=Sk0HJr50PCI&audio=kSWaRpecpTs&videostart=0&audiostart=1">Doa o akeru hitsuyō wanai</a></li>
+    <li><a href="http://cce.kapsi.fi/tuplain/?audio=3atJWUBl76I&video=oiqVJkPuqLY&astart=0&vs=19&vrate=1.0&arate=1.0">HWASONG-15 NEVA FÖGET</a></li>
+</ul>
+<p>
+The source code is available <a href="https://github.com/seece/tuplain">on GitHub</a>.
+</p>
+
+<p><i>Last update 2019-7-16</i></p>
+</body>
+</html>
