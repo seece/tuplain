@@ -12,8 +12,8 @@
             background-color:#202021;
             color:#888;
             text-align: center;
+                font-family: sans-serif;
         }
-        
         #audioplayer {
             border: 5px solid black;
         }
@@ -33,6 +33,15 @@
             text-align: center;
         }
         .transport > button {
+            background-color: #303030;
+            color:#bbb;
+            border-color: #888;
+        }
+        .transport > button:hover {
+            background-color: #404040;
+            color:#fff;
+        }
+        .bottom {
         }
     </style>
 <body>
@@ -42,6 +51,7 @@
 <div id="videoplayer">
     JavaScript is required
 </div>
+<div class="bottom">
 <div class="transport">
     <button id="play">&#9654; Play</button>
     <button id="play-fullscreen">&#9654; Play fullscreen</button>
@@ -56,8 +66,12 @@ Loading players...
 </div>
 
 <br>
+<div>
+ <label><input type="checkbox" id="autoplay">Enable autoplay</label>
+</div>
+
 <span>For help see the <a target="_blank" href="help.html">User's Guide</a></span>
-</script>
+</bottom>
 
 <script>
 (function($) {
@@ -109,6 +123,19 @@ console.log("video id: " + videoId);
 if (!(audioId && videoId)) {
     setStatus("Invalid video URL given.");
 }
+
+function loadAutoplayState() {
+    var item = localStorage.getItem("autoplayEnabled")
+    var check = document.getElementById("autoplay");
+    check.checked = item === "true";
+}
+
+function saveAutoplayState() {
+    var check = document.getElementById("autoplay");
+    localStorage.setItem("autoplayEnabled", check.checked)
+}
+
+loadAutoplayState();
 
 var pick = function(a, b, c) {
     for(var arg = 0; arg < arguments.length; arg++)
@@ -167,11 +194,9 @@ var transport = {
 
 
 function checkTime() {
-    
     if (args.lengthInSeconds == 0.0) {
         return;
     }
-    
     var delta = (Date.now() - transport.startTime)/1000.0;
     console.log(delta);
     if (delta > args.lengthInSeconds) {
@@ -183,6 +208,13 @@ function checkTime() {
 
 function canPlay() {
     return state["video"].loaded && state["audio"].loaded
+}
+
+function shouldPlay() {
+    if (playClicked)
+        return true;
+    var check = document.getElementById("autoplay");
+    return check.checked;
 }
 
 function playVideos() {
@@ -228,10 +260,9 @@ function onYouTubePlayerAPIReady() {
 
                   if (canPlay()) {
                       setStatus("Videos loaded")
-                  }
-
-                  if (playClicked && canPlay()) {
-                      playVideos();
+                      if (shouldPlay()) {
+                          playVideos();
+                      }
                   }
               }
           }
@@ -272,6 +303,8 @@ var button = document.getElementById("play")
 var button2 = document.getElementById("play-fullscreen")
 button.addEventListener("click", handler(false));
 button2.addEventListener("click", handler(true));
+var check = document.getElementById("autoplay");
+check.addEventListener("change", saveAutoplayState)
 </script>
 
 </body>
