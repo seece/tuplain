@@ -10,15 +10,15 @@
         }
         body {
             background-color:#202021;
-                color:#888;
+            color:#888;
+            text-align: center;
         }
         
         #audioplayer {
             border: 5px solid black;
         }
-        h2:hover {
-            background-color: #000;
-            cursor: pointer;
+        #status {
+            font-family:monospace;
         }
         .container {
             width: 200px;
@@ -28,62 +28,35 @@
             width: 100%;
             clear: both;
         }
+        .transport {
+            margin: 8px;
+            text-align: center;
+        }
+        .transport > button {
+        }
     </style>
 <body>
 <div id="content">
 <h1 id="title"></h1>
 
 <div id="videoplayer">
-   js pls :(
+    JavaScript is required
 </div>
-<br>
+<div class="transport">
+    <button id="play">&#9654; Play</button>
+    <button id="play-fullscreen">&#9654; Play fullscreen</button>
+</div>
 <div id="audioplayer">
 </div>
 <br>
+
 <span id="status">
-loading players...
+Loading players...
 </span>
-    
 </div>
 
-<h2 id="usage_button">usage:</h2>
-<div style="display:none;" id="help">
-    <p>Create an URL with parameters:</p>
-    <ul>
-        <li>audio = audio id (also v)</li>
-        <li>video = video id (also v)</li>
-        <li>audiostart, videostart = start time in seconds (also as, astart, vs, vstart)</li>
-        <li>vrate, arate = control playback rate. Try 0.25, 0.5, 1.0, 1.5 or 2.0.</li>
-        <li>vvol, avol = set volume 0-100. (also vv, av)</li>
-        <li>len = set length in seconds (also l)</li>
-    </ul>
-
-    <!--
-    <div class="container">
-    <form id="helper_form" action="" method="GET">
-      /*<input type="hidden" name="a" value="1" /> */
-      <label>Video URL: <input type="text" name="v"/></label><br>
-      <label>Audio URL: <input type="text" name="a"/></label><br>
-      <label>Video start: <input type="text" name="vs" value="0"/></label><br>
-      <label>Audio start<input type="text" name="as" value="0"/></label><br>
-      <label>Video rate: <input type="text" name="vr" value="1.0"/></label><br>
-      <label>Audio rate: <input type="text" name="ar" value="1.0"/></label><br>
-      <label><input type="submit" /> </label>
-    </form>
-    </div>
-    -->
-
-    <p>For example:</p>
-    <pre>?audio=tq4tr6fWnsA&video=bmxLE9RDPk4&astart=50&vs=22&vrate=0.5</pre>
-</div>
-<script>
-$("#usage_button").click(function() {
-    $("#help").toggle();
-});
-/*
-$("#helper_form").submit(function(event) {
-    //event.preventDefault();
-});*/
+<br>
+<span>For help see the <a href="help.html">User's Guide</a></span>
 </script>
 
 <script>
@@ -174,9 +147,16 @@ tag.src = "https://www.youtube.com/player_api";
 var firstScriptTag = document.getElementsByTagName('script')[0];
 firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
 
+var playClicked = false;
+
 var players = {
     "video" : {},
     "audio" : {}
+}
+
+var state = {
+    "video" : {loaded: false},
+    "audio" : {loaded: false}
 }
 
 var transport = {
@@ -201,9 +181,30 @@ function checkTime() {
     }
 }
 
+function canPlay() {
+    return state["video"].loaded && state["audio"].loaded
+}
+
+function playVideos() {
+    if (transport.playing) {
+        return;
+    }
+
+    for (var name of Object.keys(players)) {
+        players[name].playVideo();
+    }
+
+    transport.startTime = Date.now();
+    transport.playing = true;
+
+    if (args.lengthInSeconds > 0) {
+        args.timer = setInterval(checkTime, 100);
+        setStatus("Playing");
+    }
+}
 
 function onYouTubePlayerAPIReady() {
-    for (var name in players) {
+    for (var name of Object.keys(players)) {
         if (!players.hasOwnProperty(name)) { continue; }
 
         console.log(args[name]);
@@ -223,16 +224,15 @@ function onYouTubePlayerAPIReady() {
                   var vid = event.target;
                   vid.setVolume(args[vid.name].volume);
                   vid.setPlaybackRate(args[vid.name].rate);
-                  vid.playVideo();
-                  transport.startTime = Date.now();
-                  
-                  // Setup the periodic check only once.
-                  if (!transport.playing && args.lengthInSeconds > 0) {
-                    args.timer = setInterval(checkTime, 100);
-                    transport.playing = true;
-                    setStatus("playing?");
+                  state[vid.name].loaded = true
+
+                  if (canPlay()) {
+                      setStatus("Videos loaded")
                   }
-                  
+
+                  if (playClicked && canPlay()) {
+                      playVideos();
+                  }
               }
           }
         });
@@ -241,8 +241,37 @@ function onYouTubePlayerAPIReady() {
         // them from the event handler.
         players[name].name = name;
     }
-
 }
+
+function makeFullscreen(e) {
+    if (e.requestFullscreen) {
+        e.requestFullscreen();
+    } else if (e.webkitRequestFullscreen) {
+        e.webkitRequestFullscreen();
+    } else if (e.mozRequestFullScreen) {
+        e.mozRequestFullScreen();
+    } else if (e.msRequestFullscreen) {
+        e.msRequestFullscreen();
+    }
+}
+
+var handler = function(fullScreen) {
+    return function() {
+        playClicked = true;
+        if (fullScreen) {
+            makeFullscreen(document.getElementById("videoplayer"));
+        }
+        if (canPlay()) {
+            // Add a 200 ms delay to allow the browser's transition to finish
+            window.setTimeout(playVideos, 200);
+        }
+    }
+}
+
+var button = document.getElementById("play")
+var button2 = document.getElementById("play-fullscreen")
+button.addEventListener("click", handler(false));
+button2.addEventListener("click", handler(true));
 </script>
 
 </body>
